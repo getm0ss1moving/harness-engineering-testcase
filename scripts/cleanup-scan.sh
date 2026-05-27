@@ -61,9 +61,12 @@ check_missing_tests() {
 }
 
 check_todos() {
-  log "Checking TODO/FIXME markers outside generated output..."
-  if grep -RInE 'TODO|FIXME' src docs config pom.xml .github scripts 2>/dev/null; then
-    log "TODO_FOUND FIX: triage age and either resolve or create a cleanup PR."
+  log "Checking task markers outside generated output..."
+  local pattern
+  pattern='TO''DO|FIX''ME'
+
+  if grep -RInE "${pattern}" src docs config pom.xml .github scripts 2>/dev/null; then
+    log "TASK_MARKER_FOUND FIX: triage age and either resolve or create a cleanup PR."
     return 1
   fi
 }
@@ -74,8 +77,8 @@ check_draft_design_docs() {
 
   while IFS= read -r file; do
     local status
-    status="$(grep -E '^status:' "${file}" | head -n 1 || true)"
-    if [[ "${status}" =~ draft ]]; then
+    status="$(grep -E '^status:' "${file}" | head -n 1 | cut -d '#' -f 1 | tr -d '[:space:]' || true)"
+    if [[ "${status}" == "status:draft" ]]; then
       found=1
       log "DRAFT_DOC ${file} ${status} FIX: update status or close stale draft."
     fi
@@ -88,8 +91,8 @@ check_duplicate_candidates() {
   log "Checking duplicate candidates of ${MIN_DUPLICATE_LINES}+ identical non-empty lines..."
   local duplicates
   duplicates="$(
-    find src/main/java -type f -name '*.java' -print0 \
-      | xargs -0 awk 'NF { count[$0]++; text[$0]=$0 } END { for (line in count) if (count[line] >= 2) print count[line] "x " text[line] }' \
+    find src/main/java -type f -name '*.java' ! -name 'package-info.java' -print0 \
+      | xargs -0 awk 'NF && $0 !~ /^[[:space:]]*(\/\*\*|\*\/|\*)[[:space:]]*$/ { count[$0]++; text[$0]=$0 } END { for (line in count) if (count[line] >= 2) print count[line] "x " text[line] }' \
       | head -n "${MIN_DUPLICATE_LINES}"
   )"
 

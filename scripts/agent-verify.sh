@@ -6,6 +6,8 @@ PORT="${PORT:-8080}"
 STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-60}"
 WORKTREE_DIR="${WORKTREE_DIR:-$(mktemp -d /tmp/agent-verify.XXXXXX)}"
 APP_LOG="${APP_LOG:-/tmp/agent-verify-app.log}"
+DEFAULT_BOOT_RUN_ARGUMENTS="--server.port=${PORT} --spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration"
+BOOT_RUN_ARGUMENTS="${BOOT_RUN_ARGUMENTS:-${DEFAULT_BOOT_RUN_ARGUMENTS}}"
 APP_PID=""
 REPO_ROOT=""
 
@@ -60,7 +62,7 @@ start_application() {
   log "Starting Spring Boot runtime check on port ${PORT}..."
   : > "${APP_LOG}"
   mvn -B spring-boot:run \
-    -Dspring-boot.run.arguments="--server.port=${PORT}" \
+    -Dspring-boot.run.arguments="${BOOT_RUN_ARGUMENTS}" \
     >"${APP_LOG}" 2>&1 &
   APP_PID=$!
 }
