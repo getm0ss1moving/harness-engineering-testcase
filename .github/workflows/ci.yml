@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  verify:
+    name: Maven Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Set up Maven 3.9.16
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.16
+
+      - name: Verify toolchain
+        run: mvn -version
+
+      - name: Build & Verify
+        run: mvn -B clean verify
+
+      - name: Print failure diagnostics
+        if: failure()
+        run: |
+          echo "=== Surefire / ArchUnit reports ==="
+          find target/surefire-reports -maxdepth 1 -type f -print -exec cat {} \; || true
+          echo "=== Checkstyle report ==="
+          cat target/checkstyle-result.xml || true
+          echo "=== SpotBugs report ==="
+          cat target/spotbugsXml.xml || true
