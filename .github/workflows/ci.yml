@@ -23,16 +23,11 @@ jobs:
           java-version: '25'
           cache: maven
 
-      - name: Set up Maven 3.9.16
-        uses: stCarolas/setup-maven@v5
-        with:
-          maven-version: 3.9.16
-
       - name: Verify toolchain
-        run: mvn -version
+        run: ./mvnw -version
 
       - name: Build & Verify
-        run: mvn -B clean verify
+        run: ./mvnw -B clean verify
 
       - name: Print failure diagnostics
         if: failure()

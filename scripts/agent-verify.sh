@@ -8,6 +8,7 @@ WORKTREE_DIR="${WORKTREE_DIR:-$(mktemp -d /tmp/agent-verify.XXXXXX)}"
 APP_LOG="${APP_LOG:-/tmp/agent-verify-app.log}"
 DEFAULT_BOOT_RUN_ARGUMENTS="--server.port=${PORT} --spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration"
 BOOT_RUN_ARGUMENTS="${BOOT_RUN_ARGUMENTS:-${DEFAULT_BOOT_RUN_ARGUMENTS}}"
+MAVEN_EXECUTABLE="${MAVEN_EXECUTABLE:-}"
 APP_PID=""
 REPO_ROOT=""
 
@@ -49,22 +50,36 @@ verify_toolchain() {
   java -version 2>&1 | grep -q 'version "25' \
     || fail "JDK must be 25. FIX: install and select JDK 25."
 
-  mvn -version | grep -q 'Apache Maven 3.9.16' \
+  "${MAVEN_EXECUTABLE}" -version | grep -q 'Apache Maven 3.9.16' \
     || fail "Maven must be 3.9.16. FIX: install and select Maven 3.9.16."
 }
 
 run_verify() {
   log "Running full Maven verification..."
-  mvn -B clean verify
+  "${MAVEN_EXECUTABLE}" -B clean verify
 }
 
 start_application() {
   log "Starting Spring Boot runtime check on port ${PORT}..."
   : > "${APP_LOG}"
-  mvn -B spring-boot:run \
+  "${MAVEN_EXECUTABLE}" -B spring-boot:run \
     -Dspring-boot.run.arguments="${BOOT_RUN_ARGUMENTS}" \
     >"${APP_LOG}" 2>&1 &
   APP_PID=$!
+}
+
+resolve_maven_executable() {
+  if [[ -n "${MAVEN_EXECUTABLE}" ]]; then
+    return 0
+  fi
+
+  if [[ -x "./mvnw" ]]; then
+    MAVEN_EXECUTABLE="./mvnw"
+    return 0
+  fi
+
+  require_command mvn
+  MAVEN_EXECUTABLE="mvn"
 }
 
 is_actuator_healthy() {
@@ -117,7 +132,6 @@ main() {
 
   require_command git
   require_command java
-  require_command mvn
   require_command curl
 
   if ! REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
@@ -127,6 +141,7 @@ main() {
   create_worktree
   cd "${WORKTREE_DIR}"
 
+  resolve_maven_executable
   verify_toolchain
   run_verify
   start_application

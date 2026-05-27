@@ -16,10 +16,10 @@
 |了解系统架构|docs/architecture/overview.md|
 |了解模块边界和依赖规则|docs/architecture/boundaries.md|
 |了解编码规范|docs/conventions/README.md|
-|了解当前选代任务|docs/plans/current-snippet.md|
+|了解当前迭代任务|docs/plans/current-sprint.md|
 |了解 API 规范|docs/reference/api-spec.yaml|
 |了解错误码|docs/reference/error-codes.md|
-|了解测试规范|docs/testing/README.md|
+|了解测试规范|docs/conventions/testing.md|
 
 ## 硬性规则（必须遵守，CI 会验证）
 1. 依赖方向: domain -> config -> mapper -> service -> controller
@@ -27,7 +27,7 @@
 3. 单文件 (.java) ≤ 300 行；单方法 ≤ 50 行
 4. 禁止 `System.out.println` / `e.printStackTrace()`，统一使用 SLF4J `Logger`
 5. 禁止裸 `RestTemplate` / `HttpURLConnection`，统一通过 `ApiClient` 抽象
-6. 禁止字段级 `@Autowired`，必须构造注入 (推荐 Lombok `@RequiredArgsConstructor`)
+6. 禁止字段级 `@Autowired`，必须构造注入；禁止 Lombok `@Data` 等样板模型注解，新增不可变模型优先使用 Java 25 `record`
 7. 新增代码必须有对应 JUnit 5 测试，行覆盖率 ≥ 80%
 
 ## 提交规范
@@ -38,7 +38,7 @@
 
 ## 自动隔离验证
 - Codex 修改任何代码、测试、构建配置、CI 配置或架构规则后，必须在常规校验通过后执行 `./scripts/agent-verify.sh HEAD`。
-- `./scripts/agent-verify.sh HEAD` 是本项目的 git worktree 隔离验证入口，会在临时 worktree 中执行工具链校验、`mvn -B clean verify` 和 Spring Boot 启动 smoke test。
+- `./scripts/agent-verify.sh HEAD` 是本项目的 git worktree 隔离验证入口，会在临时 worktree 中执行工具链校验、`./mvnw -B clean verify` 和 Spring Boot 启动 smoke test。
 - 如果 worktree 验证失败，Codex 必须先阅读脚本输出和应用日志，修复真实问题后重新运行该脚本。
 - 如果失败原因是脚本误报或环境缺失，Codex 必须说明原因；能安全修复脚本时直接修复并重新运行。
 - 不要把 worktree 验证理解为定时任务；它是每次代码类修改后的自动验证步骤。
