@@ -58,6 +58,7 @@ class ArchitectureConstraintsTest {
     @ArchTest
     static final ArchRule domainDtoMustBeRecords = classes()
             .that().resideInAPackage("..domain.dto..")
+            .and().doNotHaveSimpleName("package-info")
             .should().beRecords()
             .allowEmptyShould(true)
             .as("Domain 下的 DTO 必须使用 Java 25 record 以确保不可变性。✅ FIX: 请改为 record。");
