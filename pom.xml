@@ -19,7 +19,7 @@
 
     <properties>
         <java.version>25</java.version>
-        <archunit.version>1.4.0</archunit.version>
+        <archunit.version>1.4.1</archunit.version>
         <checkstyle.version>13.3.0</checkstyle.version>
         <jacoco.version>0.8.14</jacoco.version>
         <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
